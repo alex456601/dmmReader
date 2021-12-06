@@ -1,46 +1,40 @@
 from flask import Flask
 import pyvisa, time
+from datetime import datetime
 
 app = Flask(__name__)
-points = None
+
 ergebnis = None
 
 
 @app.route('/')
-def hello_world():  # put application's code here
-    print("C")
+def messung():
+    print("aktiv")
     rm = pyvisa.ResourceManager('@py')
     dmm = rm.open_resource('TCPIP0::192.168.178.101::inst0::INSTR')
-    dmm.query('*IDN?')
-    print("a")
 
 
     dmm.timeout = 5000
     dmm.write("*CLS")
     dmm.write("*RST")
 
-    scanIntervals = 0
-    numberScans = 1
-    channelDelay = 0.1
-    points = 2
 
     scanlist = "(@101)"
 
-    dmm.write("CONF:TEMP TC,K,(@101)")
+    dmm.write("CONF:TEMP RTD,85, " + scanlist)
+
+    #dmm.write("ROUT:MON (@101)")
+    #dmm.write("ROUT:MON:STATE ON")
+
     dmm.write("ROUTE:SCAN " + scanlist)
-    dmm.write("ROUTE:SCAN:SIZE?")
-    numberChannels = int(dmm.read()) + 1
-    dmm.write("FORMAT:READING:CHAN ON")
-    dmm.write("FORMAT:READING:TIME ON")
 
-    dmm.write("ROUT:CHAN:DELAY " + str(channelDelay) + "," + scanlist)
-    dmm.write("TRIG:COUNT " + str(numberScans))
-    dmm.write("TRIG:SOUR TIMER")
-    dmm.write("TRIG:TIMER " + str(scanIntervals))
+    temp = {}
+    dmm.write("MEAS:TEMP? " + scanlist)
+    temp['value'] = float(dmm.read())
+    qq = temp['value']
+    print("%.2f" % qq)
 
-    dmm.write("INIT;:SYSTEM:TIME:SCAN?")
-    time.sleep(5)
-    ergebnis = dmm.read("TRAC:DATA?")
+    ergebnis = "%.2f" % qq + "°"
     return str(ergebnis)
 
 
