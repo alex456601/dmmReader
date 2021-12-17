@@ -1,15 +1,16 @@
-from flask import Flask
-import pyvisa, time
-from datetime import datetime
+from flask import Flask, render_template
+import pyvisa
 
 app = Flask(__name__)
 
 ergebnis = None
 
+@app.route('/',methods = ['POST', 'GET'])
+def home():
+    return render_template('index.html', ergebnis1 = messung())
 
-@app.route('/')
 def messung():
-    print("aktiv")
+    print("Verbunden")
     rm = pyvisa.ResourceManager('@py')
     dmm = rm.open_resource('TCPIP0::192.168.178.101::inst0::INSTR')
 
@@ -36,7 +37,6 @@ def messung():
 
     ergebnis = "%.2f" % qq + "°"
     return str(ergebnis)
-
 
 if __name__ == '__main__':
 
