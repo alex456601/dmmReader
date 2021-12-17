@@ -1,26 +1,38 @@
 from flask import Flask, render_template
 import pyvisa
+from datetime import datetime
+
 
 app = Flask(__name__)
 
 ergebnis = None
+verbindung = None
+scanlist = None
+zeit= None
 
 @app.route('/',methods = ['POST', 'GET'])
+
+
 def home():
-    return render_template('index.html', ergebnis1 = messung())
+
+    return render_template('index.html', ergebnis1 = messung(), verbindung = verbindung(), scanlist = scanlistconf(), zeit = time())
 
 def messung():
-    print("Verbunden")
-    rm = pyvisa.ResourceManager('@py')
-    dmm = rm.open_resource('TCPIP0::192.168.178.101::inst0::INSTR')
 
+    verbindung()
+
+    print("Verbunden mit ")
+    rm = pyvisa.ResourceManager('@py')
+
+    dmm = rm.open_resource('TCPIP0::192.168.178.101::inst0::INSTR')
 
     dmm.timeout = 5000
     dmm.write("*CLS")
     dmm.write("*RST")
 
 
-    scanlist = "(@101)"
+    scanlist = scanlistconf()
+
 
     dmm.write("CONF:TEMP RTD,85, " + scanlist)
 
@@ -37,6 +49,20 @@ def messung():
 
     ergebnis = "%.2f" % qq + "°"
     return str(ergebnis)
+
+def verbindung():
+    rm = pyvisa.ResourceManager('@py')
+    dmm = rm.open_resource('TCPIP0::192.168.178.101::inst0::INSTR')
+    list2 = str(dmm.query('*IDN?'))
+    return list2
+
+def scanlistconf():
+    scanlist = "(@101)"
+    return str(scanlist)
+
+def time():
+    ptime = datetime.now().strftime('%H:%M:%S')
+    return ptime
 
 if __name__ == '__main__':
 
