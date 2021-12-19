@@ -21,25 +21,22 @@ def messung():
 
     #dmm.write("SYST:TIME " + time)
     #dmm.write("SYST: " + date)
-
-
     #dmm.write("SYST:TIME 15,00,05")
 
     dmm.timeout = 5000
     dmm.write("*CLS")
     dmm.write("*RST")
 
-    scanIntervals = 5
-    numberScans = 2
+    scanIntervals = 0
+    numberScans = 1
     channelDelay = 0.1
-    points = 0
-    scanlist = "(@101:102)"
+    scanlist = "(@101:103)"
 
-    dmm.write("CONF:TEMP TC,T,(@101:102)")
+    dmm.write("CONF:TEMP TC,T,(@101:103)")
 
     dmm.write("ROUTE:SCAN " + scanlist)
     dmm.write("ROUTE:SCAN:SIZE?")
-    numberChannels = int(dmm.read()) + 1
+    numberChannels = int(dmm.read())
     dmm.write("FORMAT:READING:CHAN ON")
     dmm.write("FORMAT:READING:TIME ON")
     dmm.write("ROUT:CHAN:DELAY " + str(channelDelay)+","+scanlist)
@@ -47,40 +44,37 @@ def messung():
     dmm.write("TRIG:SOUR TIMER")
     dmm.write("TRIG:TIMER " + str(scanIntervals))
     dmm.write("INIT;:SYSTEM:TIME:SCAN?")
+    #ausgabe vom Zeitpunkt der Messung
+    print(dmm.read())
 
-
-    sleep(11)
-
-
-    dmm.read()
-    '''wait until there is a data available'''
+    sleep(3)
     points = 0
     while (points == 0):
         dmm.write("DATA:POINTS?")
         points = int(dmm.read())
-    '''
-    The data points are printed 
-    data, time, channel
-    '''
-    print()
 
-
-    for chan in range(1, numberChannels):
+    #jedes ergebnis hat eine Zeile
+    for chan in range(1, 100):
         dmm.write("DATA:REMOVE? 1")
-        ergebnis = dmm.read()
-        print(ergebnis)
+        raw = str(dmm.read())      #ergebnise
+        print(raw[0:2] + raw[4] + "." + raw[5:8] + "°" + " " + raw[-4:-1])
         points = 0
-        # wait for data
+
+        #wait for data
         while (points == 0):
             dmm.write("DATA:POINTS?")
-            points = str(dmm.read())
+            points = int(dmm.read())
 
-    return str(ergebnis + "\n")
+    return str(ergebnis) and reset()
 
-
-
-
-
+def reset():
+    rm = pyvisa.ResourceManager('@py')
+    dmm = rm.open_resource('TCPIP0::192.168.178.101::inst0::INSTR')
+    dmm.write("*CLS")
+    dmm.write("*RST")
+    dmm.close()
+    print("Verbindung unterbrochen")
+    return
 
 
 if __name__ == '__main__':
